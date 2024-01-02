@@ -20,9 +20,13 @@ set(HYPRE_BUGS    https://github.com/hypre-space/hypre/issues)
 set(HYPRE_SRCDIR  "${PROJECT_SOURCE_DIR}")
 
 set(PROJECT_NAME HYPRE)
+
+# GEL fix: adding Fortran language as a workaround to a FindBLAS.cmake
+# limitation when detecting the threaded version of MKL and using a GNU
+# compiler (mkl_gnu_thread)
 project(${PROJECT_NAME}
   VERSION ${HYPRE_VERSION}
-  LANGUAGES C)
+  LANGUAGES C Fortran)
 
 # We use C99 by default, but users are free to specify any newer standard version
 set(CMAKE_C_STANDARD 99)
@@ -31,6 +35,12 @@ if (${HYPRE_SOURCE_DIR} STREQUAL ${HYPRE_BINARY_DIR})
   message(FATAL_ERROR "In-place build not allowed! Please use a separate build directory. See the Users Manual or INSTALL file for details.")
 endif ()
 
+# GEL fix: adding WIN32 preprocessor macro because conan does not
+# define it by default and the oneAPI classic builds on Windows crash
+# (due to missing unistd.h for example)
+add_compile_definitions(
+    "$<$<BOOL:${WIN32}>:WIN32>"
+)
 if (EXISTS ${HYPRE_SOURCE_DIR}/../.git)
   execute_process(COMMAND git -C ${HYPRE_SOURCE_DIR} describe --match v* --long --abbrev=9
                   OUTPUT_VARIABLE develop_string
